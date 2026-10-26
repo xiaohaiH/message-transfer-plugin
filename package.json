@@ -58,6 +58,9 @@
     "engines": {
         "node": ">=20.19.0"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.browser.json",
         "typecheck": "tsc --noEmit",
