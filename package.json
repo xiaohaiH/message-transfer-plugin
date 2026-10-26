@@ -1,0 +1,98 @@
+{
+    "name": "@xiaohaih/message-transfer-plugin",
+    "type": "module",
+    "version": "0.1.0",
+    "packageManager": "pnpm@11.9.0",
+    "description": "Unified message sender and grouped receiver with HTTP, shared WebSocket and optional Vite HMR",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./vite": {
+            "types": "./dist/vite.d.ts",
+            "import": "./dist/vite.js"
+        },
+        "./client": {
+            "types": "./dist/client.d.ts",
+            "import": "./dist/client.js"
+        },
+        "./client-host": {
+            "types": "./dist/client-host.d.ts",
+            "import": "./dist/client-host.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "client": [
+                "./dist/client.d.ts"
+            ],
+            "client-host": [
+                "./dist/client-host.d.ts"
+            ],
+            "vite": [
+                "./dist/vite.d.ts"
+            ]
+        }
+    },
+    "bin": {
+        "message-transfer": "./dist/cli.js"
+    },
+    "files": [
+        "!**/*.key",
+        "!**/*.p12",
+        "!**/*.pem",
+        "!**/*.pfx",
+        "!**/.certs/**",
+        "AGENTS.md",
+        "AI_CONTEXT.md",
+        "README.md",
+        "dist",
+        "examples",
+        "src"
+    ],
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.browser.json",
+        "typecheck": "tsc --noEmit",
+        "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
+        "test:package": "node scripts/package-smoke.mjs",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:package",
+        "start": "node dist/cli.js",
+        "demo:vite": "pnpm build && vite --config examples/vite.config.ts",
+        "demo:ws": "pnpm build && tsx examples/standalone.ts",
+        "demo:http": "pnpm build && tsx examples/http.ts",
+        "demo:https": "pnpm build && tsx examples/https.ts --cert .certs/https-demo-cert.pem --key .certs/https-demo-key.pem",
+        "prepack": "pnpm build"
+    },
+    "peerDependencies": {
+        "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        }
+    },
+    "dependencies": {
+        "@types/node": "^22.20.4",
+        "@types/ws": "^8.18.1",
+        "detect-port": "^2.1.0",
+        "ws": "^8.18.3"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^9.5.1",
+        "eslint": "^10.11.0",
+        "eslint-plugin-format": "^2.0.1",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3",
+        "vite": "^7.3.1"
+    }
+}

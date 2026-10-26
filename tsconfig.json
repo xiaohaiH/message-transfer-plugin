@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2022", "DOM"],
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "paths": {
+            "@xiaohaih/message-transfer-plugin": ["./src/index.ts"],
+            "@xiaohaih/message-transfer-plugin/vite": ["./src/vite.ts"]
+        },
+        "types": ["node"],
+        "strict": true,
+        "exactOptionalPropertyTypes": true,
+        "noImplicitOverride": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true
+    },
+    "include": ["src/**/*.ts", "tests/**/*.ts", "examples/**/*.ts"]
+}

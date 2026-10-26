@@ -1,0 +1,7 @@
+{
+    "extends": "./tsconfig.build.json",
+    "compilerOptions": {
+        "target": "ES2019"
+    },
+    "include": ["src/client.ts", "src/client-host.ts"]
+}

@@ -1,0 +1,3 @@
+# 仅允许已知的 esbuild 依赖执行安装脚本.
+allowBuilds:
+  esbuild: true

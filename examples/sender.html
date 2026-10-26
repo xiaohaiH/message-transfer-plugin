@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>分组消息与文件发送示例</title>
+        <style>
+            /* 简单的手机布局不依赖框架, 便于 HTTP, WS, HTTPS 和 Vite 示例共用页面. */
+            :root {
+                color-scheme: light dark;
+                font-family: system-ui, sans-serif;
+            }
+            body {
+                max-width: 42rem;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            label {
+                display: block;
+                margin: 1rem 0;
+            }
+            input,
+            textarea,
+            button,
+            select {
+                font: inherit;
+                box-sizing: border-box;
+                padding: 0.6rem;
+            }
+            input,
+            textarea,
+            select {
+                display: block;
+                width: 100%;
+                margin-top: 0.4rem;
+            }
+            .radio-group {
+                margin: 1rem 0;
+                padding: 0.75rem;
+                min-width: 0;
+                border: 1px solid #888;
+            }
+            .radio-group label {
+                display: flex;
+                align-items: baseline;
+                margin: 0.5rem 0;
+                cursor: pointer;
+            }
+            .radio-group input {
+                flex: none;
+                width: auto;
+                margin: 0 0.5rem 0 0;
+                padding: 0;
+            }
+            button {
+                margin-right: 0.5rem;
+            }
+            textarea {
+                min-height: 8rem;
+            }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: break-word;
+                overflow-wrap: anywhere;
+                border: 1px solid #888;
+                padding: 1rem;
+            }
+            #status {
+                overflow-wrap: break-word;
+            }
+            .hint {
+                font-size: 0.9rem;
+            }
+            [hidden] {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <!-- 保留独立服务端口元数据供诊断, 页面不据此创建 WebSocket. -->
+    <body data-ws-port="" data-business-socket="">
+        <h1>手机到电脑: 消息与原文件</h1>
+        <p>保存到 YYYYMMDD/[分组]/文件名. group 只决定分组目录, 文本同名追加, 默认补尾部换行, 已有换行不重复添加.</p>
+        <p class="hint">
+            默认保存到启动命令所在目录的 received 文件夹. 实际绝对路径以终端的 Directory 为准, 不会下载到手机.
+        </p>
+        <p class="hint">
+            请运行 pnpm demo:vite / demo:ws / demo:http / demo:https 并访问终端中的 Page 地址, 不要直接双击 HTML.
+        </p>
+        <p class="hint">
+            选择发送函数: send 自动选择, sendByFetch 仅使用 HTTP(S), sendBySocket 仅使用已有共享连接且不会回退.
+        </p>
+        <p id="connection-status" role="status">正在加载连接状态...</p>
+        <section id="socket-controls" hidden>
+            <button id="connect" type="button">连接 / 重连业务 WebSocket</button>
+            <button id="disconnect" type="button">断开业务 WebSocket</button>
+            <p class="hint">
+                连接由 demo 宿主创建并复用, 等待已连接提示后可测试 Socket. 断开后可验证不回退 HTTP, 不会重发旧消息.
+            </p>
+        </section>
+        <!-- 不保存令牌. 业务连接由示例宿主持有, SDK 不按消息新建连接或自动重发. -->
+        <label>应用令牌 (可选, 不保存) <input id="token" type="password" autocomplete="off" /></label>
+        <p id="status" role="status">正在加载发送器...</p>
+        <form id="message-form">
+            <label
+                >发送函数
+                <select id="method">
+                    <option value="send">send: 自动选择</option>
+                    <option value="sendByFetch">sendByFetch: 仅 HTTP(S) POST</option>
+                    <option value="sendBySocket">sendBySocket: 仅业务 WS/WSS 或 HMR, 不回退 HTTP</option>
+                </select></label
+            >
+            <fieldset id="format" class="radio-group">
+                <legend>消息格式</legend>
+                <label>
+                    <input id="format-json" type="radio" name="format" value="json" checked />
+                    JSON 消息: content, 可选 group 和 name
+                </label>
+                <label>
+                    <input id="format-raw" type="radio" name="format" value="raw" />
+                    原始文本: JSON 解析失败时写入默认组
+                </label>
+                <label>
+                    <input id="format-file" type="radio" name="format" value="file" />
+                    原始文件: 图片, Excel, PDF 等
+                </label>
+            </fieldset>
+            <label
+                >group (可选分组目录; 留空直接存入日期目录)
+                <input id="group" autocomplete="off" placeholder="例如: notes 或 会议记录"
+            /></label>
+            <label
+                >name (可选完整文件名; 文本默认 default.txt, 文件默认原名)
+                <input id="name" autocomplete="off" placeholder="例如: 会议记录.txt 或 报表.xlsx"
+            /></label>
+            <p class="hint">文本名称若被原文件占用则拒绝追加, 返回错误码及原因, 不自动编号.</p>
+            <label id="content-label"
+                >content <textarea id="content" placeholder="输入正文, 需要换行时请显式输入换行."></textarea>
+            </label>
+            <section id="file-controls" hidden>
+                <label>选择一个原始文件 <input id="file" type="file" /></label>
+                <p class="hint">
+                    默认单文件上限 100 MiB (104,857,600 字节), 服务端可配置. 图片不压缩, Excel 不解析,
+                    同名文件独立保存且不覆盖.
+                </p>
+                <p class="hint">
+                    优先使用 name, 未填则使用原文件名. 同目录重名先比较内容, 相同复用, 不同编号为 报表(1).xlsx. group
+                    仅创建分组子目录, 不作为文件名前缀. 不安全或保留名称会转义, 超长名称会截短.
+                </p>
+                <p class="hint">
+                    HTTP(S) 流式上传, WS/HMR 分片确认. 不做断点续传或自动重发, 大文件默认最多等待 5 分钟.
+                </p>
+            </section>
+            <button id="send" type="submit" disabled>发送并等待回执</button>
+        </form>
+        <h2>回执和实际文件名</h2>
+        <pre id="receipts" aria-live="polite">尚未发送</pre>
+        <!-- Node 示例改写 SDK 导入为固定模块 URL, Vite 自行解析包入口, 不依赖原生 import maps. -->
+        <script type="module" src="./sender.js"></script>
+    </body>
+</html>
